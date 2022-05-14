@@ -1,4 +1,3 @@
-A complete game development blog #0: Project UFO defence
 To get straight to the point, this is a hobby project idea that I have been toying around with for a little while, that I'm finally hoping to bring to fruition. I've had many a project that have fizzled out after the first few weeks, so now I'm grabbing the bull by the horns. I'll document every bit of progress on dev.to, and store it all on git to keep myself glued to the project.
 
 The Game
