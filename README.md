@@ -6,6 +6,6 @@ So far the game has simply been called "Project UFO Defence". You guessed it, it
 
 Git: https://github.com/PuustelliJoona/ufo-defence
 
-LinkedIn: https://www.linkedin.com/in/joona-puustelli-aa031b23a
-
 Dev.to: https://dev.to/puustellijoona
+
+LinkedIn: https://www.linkedin.com/in/joona-puustelli-aa031b23a
