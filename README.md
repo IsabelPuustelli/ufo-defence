@@ -4,11 +4,8 @@ The Game
 
 So far the game has simply been called "Project UFO Defence". You guessed it, it's inspired by the original XCOM from the year 1994, "X-COM: UFO Defence". I feel It's a style of game that hasn't really been recreated. Obviously I'm a big fan of the reboot franchise, but I just feel something about the game significantly changed bringing it to 3D, something that I'm hoping to put my twist on. I haven't done much designing yet for the game. I'll get on this as soon as the base systems are in place. It'll be a lot easier to design a lot of the systems and make changes once you have a feel as to how the game looks and plays on the very foundational level.
 
-So this is the starting point:
-Image description
-
-The graphics are all free to use recourses from sites like opengameart.org that I slapped in for testing purposes. I haven't ever worked on an isometric game before so tiling it was interesting. I'll see in the future how I'll do the sprites, I might have to try my hand in making some artwork, who knows.
-
 Git: https://github.com/PuustelliJoona/ufo-defence
+
 LinkedIn: https://www.linkedin.com/in/joona-puustelli-aa031b23a
+
 Dev.to: https://dev.to/puustellijoona
