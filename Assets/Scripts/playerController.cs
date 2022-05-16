@@ -14,7 +14,7 @@ public class playerController : MonoBehaviour
         Vector3Int currentCell = map.WorldToCell(transform.position);
         transform.position =  map.GetCellCenterWorld(currentCell);
         var pos = transform.position; pos.y = pos.y + 0.05f; transform.position = pos;
-        movementPhase();
+        initialTiles(4);
     }
 
     public void movementPhase()
@@ -24,5 +24,40 @@ public class playerController : MonoBehaviour
         testSpawn.y += 1; testSpawn.x += 1;
         Debug.Log(testSpawn);
         Instantiate(movementTile, map.CellToWorld(testSpawn), Quaternion.identity);
+    }
+
+    public void initialTiles(int movementCost)
+    {
+        Vector3Int playerTile = map.WorldToCell(transform.position);
+        Vector3Int currentTile = map.WorldToCell(transform.position);
+
+        for (int y = movementCost; y >= 0; y--)
+        {
+            currentTile.x = playerTile.x;
+    
+            currentTile.y = playerTile.y - y; 
+            if (playerTile != currentTile)
+                Instantiate(movementTile, map.GetCellCenterWorld(currentTile), Quaternion.identity);
+            currentTile.y = playerTile.y + y;
+            if (playerTile != currentTile )
+                Instantiate(movementTile, map.GetCellCenterWorld(currentTile), Quaternion.identity);
+
+            for (int x = movementCost - y; x > 0; x--)
+            {
+                currentTile.x = playerTile.x - x;
+                Instantiate(movementTile, map.GetCellCenterWorld(currentTile), Quaternion.identity);
+                currentTile.x = playerTile.x + x;
+                Instantiate(movementTile, map.GetCellCenterWorld(currentTile), Quaternion.identity);
+
+                currentTile.y = playerTile.y - y;
+
+                currentTile.x = playerTile.x - x;
+                Instantiate(movementTile, map.GetCellCenterWorld(currentTile), Quaternion.identity);
+                currentTile.x = playerTile.x + x;
+                Instantiate(movementTile, map.GetCellCenterWorld(currentTile), Quaternion.identity);
+
+                currentTile.y = playerTile.y + y;
+            }
+        }
     }
 }
