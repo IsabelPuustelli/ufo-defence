@@ -13,16 +13,14 @@ public class playerController : MonoBehaviour
     {
         Vector3Int currentCell = map.WorldToCell(transform.position);
         transform.position =  map.GetCellCenterWorld(currentCell);
-        var pos = transform.position; pos.y = pos.y + 0.05f; transform.position = pos;
-        initialTiles(4);
+        //var pos = transform.position; pos.y = pos.y + 0.05f; transform.position = pos;
+        //initialTiles(4);
     }
 
     public void movementPhase()
     {
-        Debug.Log(map.WorldToCell(transform.position));
         Vector3Int testSpawn = map.WorldToCell(transform.position);
         testSpawn.y += 1; testSpawn.x += 1;
-        Debug.Log(testSpawn);
         Instantiate(movementTile, map.CellToWorld(testSpawn), Quaternion.identity);
     }
 
