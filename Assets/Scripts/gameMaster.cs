@@ -3,21 +3,42 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 using UnityEngine.InputSystem;
+using UnityEngine.Events;
+using UnityEngine.UI;
 
 public class gameMaster : MonoBehaviour
 {
+    UnityEvent updateCurrentAction = new UnityEvent();
+    UnityEvent updateCharacterList = new UnityEvent();
     private List<CharacterInfo> characters;
     public GameObject pathFinder;
     private Transform playableCharacters;
     public Tilemap map;
     private movementPointsToReach movement;
+    private fireAction fireAction;
     bool gameEnd = false;
     public int currentCharacter = 0;
 
-    void Start() 
+    public Toggle moveToggle;
+    public bool move;
+    public Toggle fireToggle;
+    public bool fire;
+
+    void Awake() 
     {
         movement = transform.Find("pathPrinter").GetComponent<movementPointsToReach>();
+        fireAction = GetComponent<fireAction>();
         playableCharacters = transform.Find("PlayableCharacters");
+
+        updateCharacterList.AddListener(movement.updateCharacterList);
+        updateCharacterList.AddListener(fireAction.updateCharacterList);
+
+        updateCurrentAction.AddListener(fireAction.updateCurrentAction);
+        updateCurrentAction.AddListener(movement.updateCurrentAction);
+
+        move = moveToggle.isOn;
+        fire = fireToggle.isOn;
+        updateCurrentAction.Invoke();
     }
 
     public void spawnCharacters(List<CharacterInfo> characterList)
@@ -30,27 +51,7 @@ public class gameMaster : MonoBehaviour
             trans.name = character.characterName;
             i++;
         }
-        movement.updateCharacterList();
-    }
-/*
-    public void updatePathFinder()
-    {
-        pathFinder.GetComponent<movementPointsToReach>().characterPos = transform.parent.Find(characters[currentCharacter].characterName).position;
-    }
-    
-    public void moveCharacter(Vector3Int location)
-    {
-        if (transform.parent.childCount > 0)
-        {
-            transform.parent.Find(characters[currentCharacter].characterName).position = map.GetCellCenterWorld(location);
-            pathFinder.GetComponent<movementPointsToReach>().characterPos = map.GetCellCenterWorld(location);
-        }
-    }
-*/
-    public List<CharacterInfo> getCharacterList(List<CharacterInfo> _characters)
-    {
-        _characters = characters;
-        return _characters;
+        updateCharacterList.Invoke();
     }
 
     public void OnCycleCharacters()
@@ -65,5 +66,38 @@ public class gameMaster : MonoBehaviour
     {
         Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
         movement.moveCharacter(map.WorldToCell(mousePosition));
+    }
+    
+    public List<CharacterInfo> getCharacterList()
+    {
+        return characters;
+    }
+
+    public CharacterInfo getCurrentCharacter()
+    {
+        return characters[currentCharacter];
+    }
+
+    public void setCharacterList(List<CharacterInfo> _characters) 
+    {
+        characters = _characters;
+    }
+
+    public void setCurrentCharacter(CharacterInfo _character)
+    {
+        characters[currentCharacter] = _character;
+    }
+
+    public void currentActionFire()
+    {
+        fire = fireToggle.isOn;
+        updateCurrentAction.Invoke();
+    }
+
+    public void currentActionMove()
+    {
+        move = moveToggle.isOn;
+        Debug.Log("Invoking action update");
+        updateCurrentAction.Invoke();
     }
 }

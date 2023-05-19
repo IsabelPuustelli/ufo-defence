@@ -9,11 +9,12 @@ using System;
 
 public class movementPointsToReach : MonoBehaviour
 {
+    public bool currentActionMove;
     private List<CharacterInfo> characters;
     public Vector3 characterPos;
     private int currentCharacter;
     public GameObject movableTile;
-    bool spawned = false;
+    bool tileEnabled = false;
     public double length = 0;
 
     private Tilemap map;
@@ -26,25 +27,30 @@ public class movementPointsToReach : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        line = GetComponent<LineRenderer>(); line.startWidth = 0.1f; line.endWidth = 0.1f;
+        line = GetComponent<LineRenderer>();
         seeker = GetComponent<Seeker>();
         text = GetComponent<TMP_Text>();
         map = GameObject.Find("Floor").GetComponent<Tilemap>();
         gameMaster = transform.parent.GetComponent<gameMaster>();
+        movableTile = Instantiate(movableTile, Vector3.zero, Quaternion.identity);
+        movableTile.SetActive(false);
     }
 
     // Update is called once per frame
     void Update()
     {
-        // Keeps the text next to the cursor
-        Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
-        Vector3Int gridPosition = map.WorldToCell(mousePosition);
-        transform.position = new Vector2(mousePosition.x + 2.65f, mousePosition.y - 2.1f);
+        if(currentActionMove == true)
+        {
+            // Keeps the text next to the cursor
+            Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
+            Vector3Int gridPosition = map.WorldToCell(mousePosition);
+            transform.position = new Vector2(mousePosition.x + 2.65f, mousePosition.y - 2.1f);
 
-        Vector3 fixedCharacterPos = new Vector3(characterPos.x, characterPos.y + 0.12f, characterPos.z);
-        // Calculates path to cursor and calls printPathLength with the path object
-        seeker.StartPath(fixedCharacterPos, new Vector3(movableTile.transform.position.x, movableTile.transform.position.y + 0.10f, movableTile.transform.position.z), printPathLength);
-        clickableTile();
+            Vector3 fixedCharacterPos = new Vector3(characterPos.x, characterPos.y + 0.12f, characterPos.z);
+            // Calculates path to cursor and calls printPathLength with the path object
+            seeker.StartPath(fixedCharacterPos, new Vector3(movableTile.transform.position.x, movableTile.transform.position.y + 0.10f, movableTile.transform.position.z), printPathLength);
+            clickableTile();
+        }
     }
 
     void OnEnable() 
@@ -86,24 +92,19 @@ public class movementPointsToReach : MonoBehaviour
 
     public void updateCharacterList()
     {
-        characters = gameMaster.getCharacterList(characters);
+        characters = gameMaster.getCharacterList();
     }
 
-    void clickableTile()    // Instantiates the movableTile object once, and then keeps it under the cursor  
+    void clickableTile()    // Sets movableTile active if not already and then keeps it under the cursor  
     {
-        if (spawned == false)
-            movableTile = Instantiate(movableTile, Vector3.zero, Quaternion.identity); spawned = true;
+        if (tileEnabled == false)
+            movableTile.SetActive(true);
 
         Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
         Vector3Int gridPosition = map.WorldToCell(mousePosition);
         gridPosition = new Vector3Int(gridPosition.x, gridPosition.y, gridPosition.z);
 
         movableTile.transform.position = map.GetCellCenterWorld(gridPosition);
-    }
-
-    public void updatePathFinder()
-    {
-        characterPos = playableCharacters.Find(characters[currentCharacter].characterName).position;
     }
     
     public void moveCharacter(Vector3Int location)
@@ -112,6 +113,7 @@ public class movementPointsToReach : MonoBehaviour
         {
             playableCharacters.Find(characters[currentCharacter].characterName).position = map.GetCellCenterWorld(location);
             characterPos = map.GetCellCenterWorld(location);
+            gameMaster.setCurrentCharacter(characters[currentCharacter]);
         }
     }
 
@@ -123,5 +125,32 @@ public class movementPointsToReach : MonoBehaviour
             currentCharacter++;
 
         updatePathFinder();
+    }
+
+    private void moveActionDeselected() 
+    {
+        movableTile.SetActive(false);
+        line.enabled = false;
+        text.enabled = false;
+    }
+    private void moveActionSelected()
+    {
+        movableTile.SetActive(true);
+        line.enabled = true;
+        text.enabled = true;
+    }
+
+    public void updatePathFinder()
+    {
+        characterPos = playableCharacters.Find(characters[currentCharacter].characterName).position;
+    }
+
+    public void updateCurrentAction()
+    {
+        currentActionMove = gameMaster.move;
+        if(currentActionMove == false)
+            moveActionDeselected();
+        else
+            moveActionSelected();
     }
 }

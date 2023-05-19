@@ -813,8 +813,20 @@ MonoBehaviour:
   m_Group: {fileID: 2088993389}
   onValueChanged:
     m_PersistentCalls:
-      m_Calls: []
-  m_IsOn: 1
+      m_Calls:
+      - m_Target: {fileID: 2090033273}
+        m_TargetAssemblyTypeName: gameMaster, Assembly-CSharp
+        m_MethodName: currentActionMove
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  m_IsOn: 0
 --- !u!114 &520718969
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6244,7 +6256,19 @@ MonoBehaviour:
   m_Group: {fileID: 2088993389}
   onValueChanged:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 2090033273}
+        m_TargetAssemblyTypeName: gameMaster, Assembly-CSharp
+        m_MethodName: currentActionFire
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   m_IsOn: 0
 --- !u!114 &1714239280
 MonoBehaviour:
@@ -6541,6 +6565,7 @@ GameObject:
   - component: {fileID: 2090033274}
   - component: {fileID: 2090033278}
   - component: {fileID: 2090033279}
+  - component: {fileID: 2090033280}
   m_Layer: 0
   m_Name: GameMaster
   m_TagString: Untagged
@@ -6650,6 +6675,10 @@ MonoBehaviour:
   pathFinder: {fileID: 1574600566}
   map: {fileID: 1017628660}
   currentCharacter: 0
+  moveToggle: {fileID: 520718968}
+  move: 0
+  fireToggle: {fileID: 1714239279}
+  fire: 0
 --- !u!114 &2090033274
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6783,6 +6812,20 @@ MonoBehaviour:
   m_DefaultActionMap: Action Map
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 519420031}
+--- !u!114 &2090033280
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2090033269}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb44d197af18c384ab890a8ac05a0d08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  map: {fileID: 1017628660}
+  attackTile: {fileID: 2429182334020373763, guid: e6b253dcaf82d034f989554bbd17867a, type: 3}
 --- !u!1001 &6200410541915472034
 PrefabInstance:
   m_ObjectHideFlags: 0
