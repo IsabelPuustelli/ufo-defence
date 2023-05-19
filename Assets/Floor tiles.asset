@@ -13,10 +13,5 @@ MonoBehaviour:
   m_Name: Floor tiles
   m_EditorClassIdentifier: 
   tiles:
-  - {fileID: 11400000, guid: 92faef53aab728548a86b2f2689211fc, type: 2}
-  - {fileID: 11400000, guid: c6a32153c1ddcf143b2815acec027417, type: 2}
-  - {fileID: 11400000, guid: 6cedbfa81ca6e244e8182bf77c1863e3, type: 2}
-  - {fileID: 11400000, guid: 7512903da4c1bb9448e664f8b48e1b12, type: 2}
-  - {fileID: 11400000, guid: dd5e0ca04cedc8c4f981d67db2288bfd, type: 2}
-  - {fileID: 11400000, guid: 25fe97295533fd446bab04cbe6bfb918, type: 2}
+  - {fileID: 11400000, guid: 2303519075af60f41af30eba3f28ec8a, type: 2}
   coverLevel: 0

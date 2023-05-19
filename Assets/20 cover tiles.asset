@@ -13,8 +13,12 @@ MonoBehaviour:
   m_Name: 20 cover tiles
   m_EditorClassIdentifier: 
   tiles:
-  - {fileID: 11400000, guid: da4585f175503c145a7985c0ff865bf2, type: 2}
-  - {fileID: 11400000, guid: fb7111708d3104640a9998d6f7d206f8, type: 2}
-  - {fileID: 11400000, guid: 1683ada4b3bcccd4b819dfc4a7df742c, type: 2}
-  - {fileID: 11400000, guid: 6534a2415af32a94284c2777140ebb32, type: 2}
+  - {fileID: 11400000, guid: c299106626c5d634b8144b6522d5c583, type: 2}
+  - {fileID: 11400000, guid: 1738cb78f27a15c40a500f2a74647fa8, type: 2}
+  - {fileID: 11400000, guid: 77469735b912e1a43993e5cf104a5fc2, type: 2}
+  - {fileID: 11400000, guid: f8ec1b6ef4cd9204081ad1f0a28b2629, type: 2}
+  - {fileID: 11400000, guid: c25a09130445d4741b3090007e90e76f, type: 2}
+  - {fileID: 11400000, guid: e120c795563b53945be5c734e6be329c, type: 2}
+  - {fileID: 11400000, guid: 5783934fff9a1404bb39ecf6f049ef96, type: 2}
+  - {fileID: 11400000, guid: f249c585e5c7b9e4199e3ba8dd7a5017, type: 2}
   coverLevel: 20
