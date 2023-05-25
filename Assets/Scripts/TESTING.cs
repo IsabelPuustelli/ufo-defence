@@ -9,20 +9,21 @@ public class TESTING : MonoBehaviour
     private List<CharacterInfo> characters;
     public GameObject knight;
     public GameObject rook;
-    private GameObject master;
+    private gameMaster master;
     public string name;
     public string displayList;
     public Text text;
     public InputField input;
 
-
     void Awake()
     {
-        displayList = "Spawn list: ";
         characters = new List<CharacterInfo>();
-        master = GameObject.Find("GameMaster");
+        master = GameObject.Find("GameMaster").GetComponent<gameMaster>();
+    }
 
-        /*
+    void Start()
+    {
+        displayList = "Spawn list: ";
 
         var obj = ScriptableObject.CreateInstance<CharacterInfo>();
         obj.characterObject = knight.transform;
@@ -33,7 +34,8 @@ public class TESTING : MonoBehaviour
         obj1.characterName = "Ben";
 
         characters.Add(obj);
-        characters.Add(obj1);*/
+        characters.Add(obj1);
+        master.spawnCharacters(characters);
     }
 
     public void addKnight ()
@@ -82,7 +84,7 @@ public class TESTING : MonoBehaviour
 
     public void Spawn()
     {
-        master.GetComponent<gameMaster>().spawnCharacters(characters);
+        master.spawnCharacters(characters);
         GameObject.Find("pathPrinter").GetComponent<movementPointsToReach>().updatePathFinder();
         displayList = ""; text.GetComponent<Text>().text = displayList; //characters.Clear();
     }

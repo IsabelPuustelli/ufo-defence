@@ -52,8 +52,4 @@ public class fireAction : MonoBehaviour
     {
         characters = gameMaster.getCharacterList();
     }
-    public void updateCurrentAction()
-    {
-        currentActionFire = gameMaster.fire;
-    }
 }

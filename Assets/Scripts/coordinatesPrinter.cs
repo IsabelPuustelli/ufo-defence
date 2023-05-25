@@ -62,7 +62,7 @@ public class coordinatesPrinter : MonoBehaviour
     {
         Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
         var hits = new List<RaycastHit2D>(Physics2D.RaycastAll(ray.origin, ray.direction));
-        Debug.Log(hits.Count);
+        //Debug.Log(hits.Count);
         if (hits.Count > 0)
         {
             hits.Sort((l, r) =>
@@ -74,7 +74,7 @@ public class coordinatesPrinter : MonoBehaviour
 
             foreach (RaycastHit2D hit in hits)
             {
-                Debug.Log(hit.collider.tag);
+                //Debug.Log(hit.collider.tag);
             }
         }
     }

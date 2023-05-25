@@ -8,37 +8,27 @@ using UnityEngine.UI;
 
 public class gameMaster : MonoBehaviour
 {
-    UnityEvent updateCurrentAction = new UnityEvent();
     UnityEvent updateCharacterList = new UnityEvent();
     private List<CharacterInfo> characters;
-    public GameObject pathFinder;
     private Transform playableCharacters;
     public Tilemap map;
-    private movementPointsToReach movement;
-    private fireAction fireAction;
+    private movementPointsToReach pathFinder;
+    private characterActions characterActions;
     bool gameEnd = false;
     public int currentCharacter = 0;
 
-    public Toggle moveToggle;
-    public bool move;
-    public Toggle fireToggle;
-    public bool fire;
-
-    void Awake() 
+    void Awake()
     {
-        movement = transform.Find("pathPrinter").GetComponent<movementPointsToReach>();
-        fireAction = GetComponent<fireAction>();
+        characters = new List<CharacterInfo>();
         playableCharacters = transform.Find("PlayableCharacters");
+        pathFinder = transform.Find("pathPrinter").GetComponent<movementPointsToReach>();
+        characterActions = GetComponent<characterActions>();
+    }
 
-        updateCharacterList.AddListener(movement.updateCharacterList);
-        updateCharacterList.AddListener(fireAction.updateCharacterList);
-
-        updateCurrentAction.AddListener(fireAction.updateCurrentAction);
-        updateCurrentAction.AddListener(movement.updateCurrentAction);
-
-        move = moveToggle.isOn;
-        fire = fireToggle.isOn;
-        updateCurrentAction.Invoke();
+    void Start() 
+    {
+        updateCharacterList.AddListener(pathFinder.updateCharacterList);
+        updateCharacterList.AddListener(characterActions.updateCharacterList);
     }
 
     public void spawnCharacters(List<CharacterInfo> characterList)
@@ -47,11 +37,13 @@ public class gameMaster : MonoBehaviour
         int i = 0;
         foreach (CharacterInfo character in characters)
         {
-            var trans = Instantiate(character.characterObject, map.GetCellCenterWorld(new Vector3Int(-8 - i, 0, -32)), Quaternion.identity, playableCharacters);
-            trans.name = character.characterName;
+            character.characterObject.name = character.characterName;
+            character.characterObject = Instantiate(character.characterObject, map.GetCellCenterWorld(new Vector3Int(-8 - i, 0, -32)), Quaternion.identity, playableCharacters);
             i++;
         }
+        Debug.Log("Invoking updateCharacterList");
         updateCharacterList.Invoke();
+        characterActions.updateCharacterList();
     }
 
     public void OnCycleCharacters()
@@ -60,12 +52,6 @@ public class gameMaster : MonoBehaviour
             currentCharacter = 0;
         else
             currentCharacter++;
-    }
-
-    public void OnClick()
-    {
-        Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
-        movement.moveCharacter(map.WorldToCell(mousePosition));
     }
     
     public List<CharacterInfo> getCharacterList()
@@ -86,18 +72,5 @@ public class gameMaster : MonoBehaviour
     public void setCurrentCharacter(CharacterInfo _character)
     {
         characters[currentCharacter] = _character;
-    }
-
-    public void currentActionFire()
-    {
-        fire = fireToggle.isOn;
-        updateCurrentAction.Invoke();
-    }
-
-    public void currentActionMove()
-    {
-        move = moveToggle.isOn;
-        Debug.Log("Invoking action update");
-        updateCurrentAction.Invoke();
     }
 }

@@ -552,6 +552,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: pathPrinter
       objectReference: {fileID: 0}
+    - target: {fileID: 362845647873110859, guid: 2ce1333c7806adb46a0b45f0bac5069c, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 362845647873110860, guid: 2ce1333c7806adb46a0b45f0bac5069c, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -814,9 +818,9 @@ MonoBehaviour:
   onValueChanged:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 2090033273}
-        m_TargetAssemblyTypeName: gameMaster, Assembly-CSharp
-        m_MethodName: currentActionMove
+      - m_Target: {fileID: 2090033280}
+        m_TargetAssemblyTypeName: characterActions, Assembly-CSharp
+        m_MethodName: actionUpdated
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -5912,11 +5916,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1574600566 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 362845647873110859, guid: 2ce1333c7806adb46a0b45f0bac5069c, type: 3}
-  m_PrefabInstance: {fileID: 482685206}
-  m_PrefabAsset: {fileID: 0}
 --- !u!224 &1574600567 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 362845647873110860, guid: 2ce1333c7806adb46a0b45f0bac5069c, type: 3}
@@ -5927,7 +5926,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 362845647873110861, guid: 2ce1333c7806adb46a0b45f0bac5069c, type: 3}
   m_PrefabInstance: {fileID: 482685206}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1574600566}
+  m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ca002c3851f4ac7448bb73bcab03afba, type: 3}
@@ -6257,9 +6256,9 @@ MonoBehaviour:
   onValueChanged:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 2090033273}
-        m_TargetAssemblyTypeName: gameMaster, Assembly-CSharp
-        m_MethodName: currentActionFire
+      - m_Target: {fileID: 2090033280}
+        m_TargetAssemblyTypeName: characterActions, Assembly-CSharp
+        m_MethodName: actionUpdated
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -6672,13 +6671,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 068b0751d7f2e674a9d68c2f1786cb82, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pathFinder: {fileID: 1574600566}
   map: {fileID: 1017628660}
   currentCharacter: 0
-  moveToggle: {fileID: 520718968}
-  move: 0
-  fireToggle: {fileID: 1714239279}
-  fire: 0
 --- !u!114 &2090033274
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6821,11 +6815,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 2090033269}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cb44d197af18c384ab890a8ac05a0d08, type: 3}
+  m_Script: {fileID: 11500000, guid: d0a680976414c564f8c170253bcf8164, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  map: {fileID: 1017628660}
   attackTile: {fileID: 2429182334020373763, guid: e6b253dcaf82d034f989554bbd17867a, type: 3}
+  moveTile: {fileID: 5974002240943045378, guid: 1559277afc0138f4ca050daaa516daec, type: 3}
+  bullet: {fileID: 5352901050042285718, guid: 375e75d34fa42cf429ad43b0418bf750, type: 3}
+  map: {fileID: 1017628660}
+  moveToggle: {fileID: 520718968}
+  attackToggle: {fileID: 1714239279}
 --- !u!1001 &6200410541915472034
 PrefabInstance:
   m_ObjectHideFlags: 0
