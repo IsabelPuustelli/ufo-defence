@@ -12,6 +12,7 @@ public class characterActions : MonoBehaviour
     public GameObject attackTile;
     public GameObject moveTile;
     public GameObject bullet;
+    private Rigidbody2D rb;
     public Tilemap map;
     private gameMaster gameMaster;
     private movementPointsToReach pathFinder;
@@ -32,7 +33,7 @@ public class characterActions : MonoBehaviour
     }
 
     void Start()
-    {   
+    {
         moveTile = Instantiate(moveTile);
         moveToggle.isOn = true;
         currentAction = moveAction;
@@ -44,7 +45,7 @@ public class characterActions : MonoBehaviour
         Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
         Vector3Int gridPosition = map.WorldToCell(mousePosition);
         currentGraphic(map.GetCellCenterWorld(gridPosition));
-        
+
         //currentGraphic(map.WorldToCell(Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue())));
     }
 
@@ -61,6 +62,8 @@ public class characterActions : MonoBehaviour
         charPos.y += 0.083f;
         var lookDir = mousePos - charPos;
         var bulletInst = Instantiate(bullet, charPos, Quaternion.FromToRotation(Vector2.left, lookDir));
+        rb = bulletInst.GetComponent<Rigidbody2D>();
+        rb.AddForce(-bulletInst.transform.right * 0.001f, ForceMode2D.Impulse);
     }
 
     void attackGraphic(Vector2 mousePos)
@@ -118,17 +121,17 @@ public class characterActions : MonoBehaviour
         moveTile.transform.position = mousePos;
     }
 
-    public void actionUpdated() 
+    public void actionUpdated()
     {
-        if(attackToggle.isOn){disableGraphics(); currentAction = attackAction; currentGraphic = attackGraphic;}
-        if(moveToggle.isOn){disableGraphics(); currentAction = moveAction; currentGraphic = moveGraphic;}
+        if (attackToggle.isOn) { disableGraphics(); currentAction = attackAction; currentGraphic = attackGraphic; }
+        if (moveToggle.isOn) { disableGraphics(); currentAction = moveAction; currentGraphic = moveGraphic; }
     }
 
     void disableGraphics()
     {
         moveTile.SetActive(false);
         attackTile.SetActive(false);
-        pathFinder.enableGraphics(false);   
+        pathFinder.enableGraphics(false);
         initExec = true;
     }
 
