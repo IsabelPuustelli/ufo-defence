@@ -7,8 +7,6 @@ public class TESTING : MonoBehaviour
 {
 
     private List<CharacterInfo> characters;
-    public GameObject knight;
-    public GameObject rook;
     private gameMaster master;
     public string name;
     public string displayList;
@@ -26,15 +24,37 @@ public class TESTING : MonoBehaviour
         displayList = "Spawn list: ";
 
         var obj = ScriptableObject.CreateInstance<CharacterInfo>();
-        obj.characterObject = knight.transform;
+        obj.piece = "knight";
+        obj.movementPointsMax = 120;
+        obj.movementPointsLeft = 120;
+        obj.side = 0;
         obj.characterName = "Toddy";
 
+        var obj2 = ScriptableObject.CreateInstance<CharacterInfo>();
+        obj2.piece = "rook";
+        obj2.movementPointsMax = 120;
+        obj2.movementPointsLeft = 120;
+        obj2.side = 0;
+        obj2.characterName = "Bobby";
+
         var obj1 = ScriptableObject.CreateInstance<CharacterInfo>();
-        obj1.characterObject = knight.transform;
+        obj1.movementPointsMax = 120;
+        obj1.piece = "rook";
+        obj1.movementPointsLeft = 120;
+        obj1.side = 1;
         obj1.characterName = "Ben";
+
+        var obj3 = ScriptableObject.CreateInstance<CharacterInfo>();
+        obj3.piece = "knight";
+        obj3.movementPointsMax = 120;
+        obj3.movementPointsLeft = 120;
+        obj3.side = 1;
+        obj3.characterName = "Lewis";
 
         characters.Add(obj);
         characters.Add(obj1);
+        characters.Add(obj2);
+        characters.Add(obj3);
         master.spawnCharacters(characters);
     }
 
@@ -43,7 +63,7 @@ public class TESTING : MonoBehaviour
         name = input.GetComponent<InputField>().text;
         bool theNameAlreadyInUse = false;
         var obj = ScriptableObject.CreateInstance<CharacterInfo>();
-        obj.characterObject = knight.transform;
+        obj.piece = "knight";
         obj.characterName = name;
 
         foreach (CharacterInfo character in characters)
@@ -65,7 +85,7 @@ public class TESTING : MonoBehaviour
         name = input.GetComponent<InputField>().text;
         bool theNameAlreadyInUse = false;
         var obj = ScriptableObject.CreateInstance<CharacterInfo>();
-        obj.characterObject = rook.transform;
+        obj.piece = "rook";
         obj.characterName = name;
 
         foreach (CharacterInfo character in characters)

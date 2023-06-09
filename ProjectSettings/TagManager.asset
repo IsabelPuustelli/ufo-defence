@@ -7,11 +7,13 @@ TagManager:
   - Floor
   - Cover
   - movableTile
+  - character
+  - projectile
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Characters
   - Water
   - UI
   - Cover
@@ -41,6 +43,15 @@ TagManager:
   - 
   - 
   m_SortingLayers:
+  - name: Ground
+    uniqueID: 4098584525
+    locked: 0
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: Characters
+    uniqueID: 2603469187
+    locked: 0
+  - name: UI
+    uniqueID: 1738599301
     locked: 0

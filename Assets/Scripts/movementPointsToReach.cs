@@ -10,15 +10,17 @@ using System;
 public class movementPointsToReach : MonoBehaviour
 {
     bool currentActionMove;
+    public double length = 0;
+    public List<Vector3> movementPath;
     private List<CharacterInfo> characters;
     private Vector3 characterPos;
     private int currentCharacter;
-    public double length = 0;
     private Tilemap map;
     private Seeker seeker;
     private TMP_Text text;
     private LineRenderer line;
     private gameMaster gameMaster;
+    private characterActions characterActions;
 
     void Awake()
     {
@@ -28,6 +30,7 @@ public class movementPointsToReach : MonoBehaviour
         text = GetComponent<TMP_Text>();
         map = GameObject.Find("Floor").GetComponent<Tilemap>();
         gameMaster = transform.parent.GetComponent<gameMaster>();
+        characterActions = transform.parent.GetComponent<characterActions>();
     }
 
     void Update()
@@ -56,6 +59,7 @@ public class movementPointsToReach : MonoBehaviour
     void printPathLength(Path path) // Checks the path length and shows is as a rounded int next to the cursor
     {                               // and then draw a line that's colored based on the length of the path
         length = 0;
+        movementPath = path.vectorPath;
         line.positionCount = path.vectorPath.Count;
         line.startWidth = 0.025f; line.endWidth = 0.025f;
         for (int i = 0; i < path.vectorPath.Count; i++)
@@ -72,10 +76,10 @@ public class movementPointsToReach : MonoBehaviour
 
         text.SetText(Math.Round(length * 10, 0).ToString());
 
-        switch (length)
+        switch (Math.Round(length * 10, 0))
         {
-            case > 6: line.startColor = Color.cyan; line.endColor = Color.red; break;
-            case > 3: line.startColor = Color.cyan; line.endColor = Color.green; break;
+            case var value when value > characters[currentCharacter].movementPointsMax: line.startColor = Color.cyan; line.endColor = Color.red; break;
+            case var value when value > (characters[currentCharacter].movementPointsMax * 0.7f): line.startColor = Color.cyan; line.endColor = Color.green; break;
             default: line.startColor = Color.cyan; line.endColor = Color.blue; break;
         }
     }
@@ -99,12 +103,20 @@ public class movementPointsToReach : MonoBehaviour
         characters = gameMaster.getCharacterList();
     }
 
-    public void OnCycleCharacters()
+    public void cycleCharacters()
     {
-        if (currentCharacter == (characters.Count - 1))
-            currentCharacter = 0;
-        else
+        if(!characterActions.pieceMoved)
+        {
             currentCharacter++;
+            if (currentCharacter == characters.Count)
+                currentCharacter = 0;
+            while (gameMaster.currentTurn != characters[currentCharacter].side)
+            {
+                currentCharacter++;
+                if (currentCharacter == (characters.Count))
+                    currentCharacter = 0;
+            }
+        }
 
         updatePathFinder();
     }

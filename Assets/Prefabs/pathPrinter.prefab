@@ -150,11 +150,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ca002c3851f4ac7448bb73bcab03afba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  seeker: {fileID: 0}
-  map: {fileID: 0}
-  characterPos: {x: 0, y: 0, z: 0}
-  movableTile: {fileID: 5974002240943045378, guid: 1559277afc0138f4ca050daaa516daec, type: 3}
   length: 0
+  movementPath: []
 --- !u!120 &362845647873110896
 LineRenderer:
   m_ObjectHideFlags: 0
@@ -193,8 +190,8 @@ LineRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: -196382771
+  m_SortingLayer: 1
   m_SortingOrder: 30
   m_Positions: []
   m_Parameters:
