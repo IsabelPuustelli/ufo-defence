@@ -72,6 +72,8 @@ public class characterActions : MonoBehaviour
                                         map.GetCellCenterWorld(map.WorldToCell(Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue()))).y);
         if(!overUI)
             currentAction(_mousePos);
+        
+        Debug.Log(map.WorldToCell(_mousePos));
     }
 
     void attackAction(Vector2 mousePos)
@@ -164,6 +166,7 @@ public class characterActions : MonoBehaviour
             characters[currentCharacter].characterObject.GetComponent<moveAnimationController>().moveAnimation();
             gameMaster.setCharacter(characters[currentCharacter], currentCharacter);
             pieceMoved = true;
+            GameObject.Find("Grid").GetComponent<tileMapManager>().revealArea(mousePos, 10);
         }else if (hits[0].collider.tag == "Floor"){Debug.Log("Distance " + Convert.ToInt32(Math.Round(pathFinder.length * 10, 0)) + " is greater than movement poinst " + characters[currentCharacter].movementPointsLeft);}
     }
 
