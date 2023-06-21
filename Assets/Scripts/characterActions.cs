@@ -18,6 +18,7 @@ public class characterActions : MonoBehaviour
     private int currentCharacter;
     private int projectileIndex;
     private gameMaster gameMaster;
+    private tileMapManager mapManager;
     private Rigidbody2D rb;
     private movementPointsToReach pathFinder;
     private List<CharacterInfo> characters = new List<CharacterInfo>();
@@ -37,7 +38,7 @@ public class characterActions : MonoBehaviour
     {
         pathFinder = transform.Find("pathPrinter").GetComponent<movementPointsToReach>();
         gameMaster = GetComponent<gameMaster>();
-
+        mapManager = GameObject.Find("Grid").GetComponent<tileMapManager>();
     }
 
     void Start()
@@ -143,7 +144,6 @@ public class characterActions : MonoBehaviour
     {
         Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
         var hits = new List<RaycastHit2D>(Physics2D.RaycastAll(ray.origin, ray.direction));
-        Debug.Log(hits.Count);
         if (hits.Count > 0)
         {
             hits.Sort((l, r) =>
@@ -152,11 +152,6 @@ public class characterActions : MonoBehaviour
                 var p2 = r.transform.position;
                 return (int)(((p1.y - p2.y) * 10 + (p2.z - p1.z)) * 10);
             });
-
-            foreach (RaycastHit2D hit in hits)
-            {
-                Debug.Log(hit.collider.tag);
-            }
         }
         if (hits[0].collider.tag == "Floor" &&
             Convert.ToInt32(Math.Round(pathFinder.length * 10, 0)) <= characters[currentCharacter].movementPointsLeft)
@@ -166,7 +161,9 @@ public class characterActions : MonoBehaviour
             characters[currentCharacter].characterObject.GetComponent<moveAnimationController>().moveAnimation();
             gameMaster.setCharacter(characters[currentCharacter], currentCharacter);
             pieceMoved = true;
-            GameObject.Find("Grid").GetComponent<tileMapManager>().revealArea(mousePos, 10);
+            mapManager.revealArea(mousePos, 10);
+            mapManager.fogOfWar(mousePos);
+
         }else if (hits[0].collider.tag == "Floor"){Debug.Log("Distance " + Convert.ToInt32(Math.Round(pathFinder.length * 10, 0)) + " is greater than movement poinst " + characters[currentCharacter].movementPointsLeft);}
     }
 
