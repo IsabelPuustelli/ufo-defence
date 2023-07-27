@@ -23,33 +23,13 @@ public class TESTING : MonoBehaviour
     {
         displayList = "Spawn list: ";
 
-        var obj = ScriptableObject.CreateInstance<CharacterInfo>();
-        obj.piece = "knight";
-        obj.movementPointsMax = 120;
-        obj.movementPointsLeft = 120;
-        obj.side = 0;
-        obj.characterName = "Toddy";
+        var obj = Knight.CreateInstance("Toddy", 0);
 
-        var obj2 = ScriptableObject.CreateInstance<CharacterInfo>();
-        obj2.piece = "rook";
-        obj2.movementPointsMax = 120;
-        obj2.movementPointsLeft = 120;
-        obj2.side = 0;
-        obj2.characterName = "Bobby";
+        var obj2 = Rook.CreateInstance("Bobby", 0);
 
-        var obj1 = ScriptableObject.CreateInstance<CharacterInfo>();
-        obj1.movementPointsMax = 120;
-        obj1.piece = "rook";
-        obj1.movementPointsLeft = 120;
-        obj1.side = 1;
-        obj1.characterName = "Ben";
+        var obj1 = Rook.CreateInstance("Ben", 1);
 
-        var obj3 = ScriptableObject.CreateInstance<CharacterInfo>();
-        obj3.piece = "knight";
-        obj3.movementPointsMax = 120;
-        obj3.movementPointsLeft = 120;
-        obj3.side = 1;
-        obj3.characterName = "Lewis";
+        var obj3 = Knight.CreateInstance("Lewis", 1);
 
         characters.Add(obj);
         characters.Add(obj1);
@@ -100,12 +80,5 @@ public class TESTING : MonoBehaviour
         {
             characters.Add(obj); displayList = displayList + "  Rook: " + name; text.GetComponent<Text>().text = displayList;
         }
-    }
-
-    public void Spawn()
-    {
-        master.spawnCharacters(characters);
-        GameObject.Find("pathPrinter").GetComponent<movementPointsToReach>().updatePathFinder();
-        displayList = ""; text.GetComponent<Text>().text = displayList; //characters.Clear();
     }
 }

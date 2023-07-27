@@ -10,6 +10,7 @@ public class tileLibrary : MonoBehaviour
     private Object[] prefabs;
     private Object[] tileBases;
     private Dictionary<string, Object> prefabDictionary;
+    private Dictionary<string, blockData> blockDictionary;
 
     void Awake()
     {
@@ -21,6 +22,7 @@ public class tileLibrary : MonoBehaviour
     void Start()
     {
         prefabDictionary = new Dictionary<string, Object>();
+        blockDictionary = new Dictionary<string, blockData>();
 
         foreach(Object prefab in prefabs)
         {
@@ -29,14 +31,33 @@ public class tileLibrary : MonoBehaviour
         foreach(Object tile in tileBases)
         {
             blockData block = (blockData)tile;
+            blockDictionary.Add(block.name, block);
             block.isHidden = true;
         }
         map[0].RefreshAllTiles();
         map[1].RefreshAllTiles();
+        map[2].RefreshAllTiles();
         foreach(Object tile in tileBases)
         {
             blockData block = (blockData)tile;
             block.isHidden = false;
+        }
+    }
+
+    public void setFog (List <Vector2Int> fogLoc)
+    {
+        blockDictionary["fog"].isHidden = false;
+        foreach (Vector2Int loc in fogLoc)
+        {
+            map[2].RefreshTile(new Vector3Int(loc.x, loc.y, 0));
+        }
+    }
+    public void removeFog (List <Vector2Int> fogLoc)
+    {
+        blockDictionary["fog"].isHidden = true;
+        foreach (Vector2Int loc in fogLoc)
+        {
+            map[2].RefreshTile(new Vector3Int(loc.x, loc.y, 0));
         }
     }
 

@@ -13,6 +13,7 @@ public class gameMaster : MonoBehaviour
     private List<CharacterInfo> blacks;
     private List<CharacterInfo> whites;
     public List<CharacterInfo> allCharacters;
+    private Transform mainCamera;
     private Transform whitesTrans;
     private Transform blacksTrans;
     public Transform fullHealth;
@@ -24,12 +25,17 @@ public class gameMaster : MonoBehaviour
     public Tilemap map;
     private movementPointsToReach pathFinder;
     private characterActions characterActions;
+    private tileMapManager tileMapManager;
     private animationController anim;
+    public InputAction cameraMovement;
     bool gameEnd = false;
     public int currentCharacter = 0;
+    private int i = 0;
 
     void Awake()
     {
+        mainCamera = transform.Find("Main Camera");
+
         whites = new List<CharacterInfo>();
         blacks = new List<CharacterInfo>();
         allCharacters = new List<CharacterInfo>();
@@ -40,9 +46,21 @@ public class gameMaster : MonoBehaviour
         pathFinder = transform.Find("pathPrinter").GetComponent<movementPointsToReach>();
         characterActions = gameObject.GetComponent<characterActions>();
         anim = transform.Find("animations").GetComponent<animationController>();
+        tileMapManager = GameObject.Find("Grid").GetComponent<tileMapManager>();
 
         updateCharacterList.AddListener(pathFinder.updateCharacterList);
         updateCharacterList.AddListener(characterActions.updateCharacterList);
+    }
+
+    void Update()
+    {
+        Vector2 movement = cameraMovement.ReadValue<Vector2>();
+        mainCamera.transform.position += new Vector3(movement.x / 10, movement.y / 10, 0);
+    }
+
+    void OnEnable()
+    {
+        cameraMovement.Enable();
     }
 
     public void switchTurns()
@@ -54,73 +72,81 @@ public class gameMaster : MonoBehaviour
 
     public void spawnCharacters(List<CharacterInfo> characterList)
     {
-        int i = 0;
-        foreach (CharacterInfo character in characterList)
+        allCharacters.AddRange(characterList);
+        updateCharacterList.Invoke();
+        spawnLoop();
+    }
+
+    public void spawnLoop()
+    {
+        float j = -0.024f;
+        
+        if (i != allCharacters.Count)
         {
-            float j = -0.024f;
-            if (character.side == 0) 
+            if (allCharacters[i].side == 0) 
             {
-                switch (character.piece)
-                {
-                    case "pawn": break;
-                    case "knight": character.characterObject = Instantiate(wKnight, map.GetCellCenterWorld(new Vector3Int(-11 - i, -20, 0)), Quaternion.identity, whitesTrans); break;
-                    case "rook":   character.characterObject = Instantiate(wRook, map.GetCellCenterWorld(new Vector3Int(-11 - i, -20, 0)), Quaternion.identity, whitesTrans);   break;
-                }
-                character.characterObject.name = character.characterName;
-                character.updateInfo();
-                List <Transform> healthParalellograms = new List<Transform>();
+                allCharacters[i].characterObject = Instantiate(allCharacters[i].characterPrefab, map.GetCellCenterWorld(new Vector3Int(-11 - i, -20, 0)), Quaternion.identity, whitesTrans);
+                allCharacters[i].characterObject.name = allCharacters[i].characterName;
+                allCharacters[i].updateInfo();
 
-                for(int x = 0; x < character.maxHealth; x++)
+                // Spawning characters healthbar in sepereate paralellograms
+                List <Transform> healthParalellograms = new List<Transform>();
+                for(int x = 0; x < allCharacters[i].maxHealth; x++)
                 {
-                    var inst = Instantiate(emptyHealth, new Vector2(character.characterObject.transform.position.x + j, character.characterObject.transform.position.y + 0.49f), Quaternion.identity, character.characterObject.transform);
+                    var inst = Instantiate(emptyHealth, new Vector2(allCharacters[i].characterObject.transform.position.x + j, allCharacters[i].characterObject.transform.position.y + 0.49f), Quaternion.identity, allCharacters[i].characterObject.transform);
                     j += 0.09f;
                 }
                 j = -0.024f;
-                for(int x = 0; x < character.maxHealth; x++)
+                for(int x = 0; x < allCharacters[i].maxHealth; x++)
                 {
-                    var inst = Instantiate(fullHealth, new Vector2(character.characterObject.transform.position.x + j, character.characterObject.transform.position.y + 0.49f), Quaternion.identity, character.characterObject.transform);
+                    var inst = Instantiate(fullHealth, new Vector2(allCharacters[i].characterObject.transform.position.x + j, allCharacters[i].characterObject.transform.position.y + 0.49f), Quaternion.identity, allCharacters[i].characterObject.transform);
                     healthParalellograms.Add(inst);
                     j += 0.09f;
                 }
-                character.healthParalellograms = healthParalellograms;
-                character.fullHealth = fullHealth;
-                character.emptyHealth = emptyHealth;
-                whites.Add(character);
-                allCharacters.Add(character);
-                Debug.Log(character.characterName + " spawned on white side");
+                allCharacters[i].healthParalellograms = healthParalellograms;
+                allCharacters[i].fullHealth = fullHealth;
+                allCharacters[i].emptyHealth = emptyHealth;
+
+
+                allCharacters[i].characterObject.GetComponent<moveAnimationController>().spawnAnimation();
+
+                whites.Add(allCharacters[i]);
+                Debug.Log(allCharacters[i].characterName + " spawned on white side");
             }else{
-                switch (character.piece)
-                {
-                    case "pawn": break;
-                    case "knight": character.characterObject = Instantiate(bKnight, map.GetCellCenterWorld(new Vector3Int(-11 - i, -20, 0)), Quaternion.identity, blacksTrans); break;
-                    case "rook":   character.characterObject = Instantiate(bRook, map.GetCellCenterWorld(new Vector3Int(-11 - i, -20, 0)), Quaternion.identity, blacksTrans);   break;
-                }
-                character.characterObject.name = character.characterName;
-                character.updateInfo();
+                allCharacters[i].characterObject = Instantiate(allCharacters[i].characterPrefab, map.GetCellCenterWorld(new Vector3Int(-11 - i, -20, 0)), Quaternion.identity, whitesTrans);
+                allCharacters[i].characterObject.name = allCharacters[i].characterName;
+                allCharacters[i].updateInfo();
                 List <Transform> healthParalellograms = new List<Transform>();
 
-                for(int x = 0; x < character.maxHealth; x++)
+                for(int x = 0; x < allCharacters[i].maxHealth; x++)
                 {
-                    var inst = Instantiate(emptyHealth, new Vector2(character.characterObject.transform.position.x + j, character.characterObject.transform.position.y + 0.49f), Quaternion.identity, character.characterObject.transform);
+                    var inst = Instantiate(emptyHealth, new Vector2(allCharacters[i].characterObject.transform.position.x + j, allCharacters[i].characterObject.transform.position.y + 0.49f), Quaternion.identity, allCharacters[i].characterObject.transform);
                     j += 0.09f;
                 }
                 j = -0.024f;
-                for(int x = 0; x < character.maxHealth; x++)
+                for(int x = 0; x < allCharacters[i].maxHealth; x++)
                 {
-                    var inst = Instantiate(fullHealth, new Vector2(character.characterObject.transform.position.x + j, character.characterObject.transform.position.y + 0.49f), Quaternion.identity, character.characterObject.transform);
+                    var inst = Instantiate(fullHealth, new Vector2(allCharacters[i].characterObject.transform.position.x + j, allCharacters[i].characterObject.transform.position.y + 0.49f), Quaternion.identity, allCharacters[i].characterObject.transform);
                     healthParalellograms.Add(inst);
                     j += 0.09f;
                 }
-                character.healthParalellograms = healthParalellograms;
-                character.fullHealth = fullHealth;
-                character.emptyHealth = emptyHealth;
-                blacks.Add(character);
-                allCharacters.Add(character);
-                Debug.Log(character.characterName + " spawned on black side");
+                allCharacters[i].healthParalellograms = healthParalellograms;
+                allCharacters[i].fullHealth = fullHealth;
+                allCharacters[i].emptyHealth = emptyHealth;
+
+                allCharacters[i].characterObject.GetComponent<moveAnimationController>().spawnAnimation();
+
+                blacks.Add(allCharacters[i]);
+                Debug.Log(allCharacters[i].characterName + " spawned on black side");
             }
             i++;
+            characterActions.actionUpdated();
         }
-        updateCharacterList.Invoke();
+        else
+        {
+            tileMapManager.revealArea(map.GetCellCenterWorld(new Vector3Int(-11 - i, -20, 0)), 15);
+            tileMapManager.fogOfWar(10, allCharacters[currentCharacter].characterObject.transform.position);
+        }
     }
 
     public void removeCharacter(string name, int side)
@@ -178,8 +204,8 @@ public class gameMaster : MonoBehaviour
         {
             if (currentCharacter == (allCharacters.Count - 1))
                 currentCharacter = 0;
-
-            currentCharacter++;
+            else
+                currentCharacter++;
             while (currentTurn != allCharacters[currentCharacter].side)
             {
                 currentCharacter++;
@@ -198,9 +224,17 @@ public class gameMaster : MonoBehaviour
 
     public CharacterInfo getCurrentCharacter()
     {
-        if(currentTurn == 0){return whites[currentCharacter];}
-        else                {return blacks[currentCharacter];}
+        return allCharacters[currentCharacter];
+    }
 
+    public CharacterInfo getCharacterByName(string name)
+    {
+        foreach(CharacterInfo chara in allCharacters)
+        {
+            if (chara.characterName == name)
+                return chara;
+        }
+        return null;
     }
 
     public void setCharacterList(List<CharacterInfo> _characters) 

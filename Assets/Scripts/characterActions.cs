@@ -9,11 +9,13 @@ using System;
 public class characterActions : MonoBehaviour
 {
     bool initExec;
-    public bool overUI;
     public GameObject attackTile;
     public GameObject moveTile;
+    public GameObject emptyTile;
     public GameObject bullet;
     public GameObject attackArea;
+    public GameObject holdArea;
+    private GameObject mainCamera;
     public Tilemap map;
     private int currentCharacter;
     private int projectileIndex;
@@ -23,22 +25,34 @@ public class characterActions : MonoBehaviour
     private movementPointsToReach pathFinder;
     private List<CharacterInfo> characters = new List<CharacterInfo>();
     private List<projectileInfo> projectiles = new List<projectileInfo>();
-    List<CharacterInfo> charInLineOfFire = new List<CharacterInfo>();
+    private List<CharacterInfo> charInLineOfFire = new List<CharacterInfo>();
+    public List<CharacterInfo> charInOverwatch = new List<CharacterInfo>();
     delegate void actionDelecate(Vector2 mousePos);
     actionDelecate currentAction;
     actionDelecate currentGraphic;
 
     public Toggle moveToggle;
     public Toggle attackToggle;
+    public Toggle holdToggle;
 
+    public bool overUI;
     public bool pieceMoved;
     public bool abilityUsed;
+    public bool walking = false;
+
+    public string walker;
+    AnimationClip cameraMove;
+    Animation anim;
 
     void Awake()
     {
         pathFinder = transform.Find("pathPrinter").GetComponent<movementPointsToReach>();
+        mainCamera = GameObject.Find("Main Camera");
         gameMaster = GetComponent<gameMaster>();
         mapManager = GameObject.Find("Grid").GetComponent<tileMapManager>();
+        anim = mainCamera.GetComponent<Animation>();
+        cameraMove = new AnimationClip();
+        disableGraphics();
     }
 
     void Start()
@@ -46,6 +60,8 @@ public class characterActions : MonoBehaviour
         moveTile = Instantiate(moveTile);
         attackTile = Instantiate(attackTile);
         attackArea = Instantiate(attackArea);
+        holdArea = Instantiate(holdArea);
+        emptyTile = Instantiate(emptyTile);
         moveToggle.isOn = true;
         currentAction = moveAction;
         currentGraphic = moveGraphic;
@@ -53,6 +69,8 @@ public class characterActions : MonoBehaviour
 
         pieceMoved = false;
         abilityUsed = false;
+
+        cameraMove.legacy = true;
     }
 
     void Update()
@@ -64,7 +82,9 @@ public class characterActions : MonoBehaviour
             currentGraphic(map.GetCellCenterWorld(gridPosition));
         }
 
-        //if(abilityUsed){endTurn();}
+        if(walking)
+            foreach(CharacterInfo character in charInOverwatch)
+                character.checkOverwatch();
     }
 
     void OnClick()
@@ -73,13 +93,11 @@ public class characterActions : MonoBehaviour
                                         map.GetCellCenterWorld(map.WorldToCell(Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue()))).y);
         if(!overUI)
             currentAction(_mousePos);
-        
-        Debug.Log(map.WorldToCell(_mousePos));
     }
 
     void attackAction(Vector2 mousePos)
     {
-        Vector2 charPos = characters[gameMaster.currentCharacter].characterObject.transform.position;
+        Vector2 charPos = characters[currentCharacter].characterObject.transform.position;
         charPos.y += 0.083f; mousePos.y += 0.12f;
         var lookDir = mousePos - charPos;
 
@@ -97,8 +115,10 @@ public class characterActions : MonoBehaviour
         rb.AddForce(-bulletInst.transform.right * 0.001f, ForceMode2D.Impulse);
         abilityUsed = true;
 
-        moveToggle.isOn = false;
-        attackToggle.isOn = false;
+        foreach (CharacterInfo character in characters)
+            character.disableAttackHover();
+
+        actionUpdated();
     }
 
     void attackGraphic(Vector2 mousePos)
@@ -110,9 +130,9 @@ public class characterActions : MonoBehaviour
             charInLineOfFire.Clear();
             attackTile.SetActive(true);
             attackArea.SetActive(true);
-            attackArea.transform.position = currentCharacterPos;
             initExec = false;
         }
+        attackArea.transform.position = currentCharacterPos;
         var moveCheck = attackTile.transform.position;
         attackTile.transform.position = new Vector2(mousePos.x, (mousePos.y - 0.083f));
 
@@ -157,17 +177,18 @@ public class characterActions : MonoBehaviour
             Convert.ToInt32(Math.Round(pathFinder.length * 10, 0)) <= characters[currentCharacter].movementPointsLeft)
         {
             characters[currentCharacter].movementPointsLeft -= Convert.ToInt32(Math.Round(pathFinder.length * 10, 0));
-            characters[currentCharacter].characterObject.GetComponent<moveAnimationController>().i = 0;
+            characters[currentCharacter].characterObject.GetComponent<moveAnimationController>().i = 0; 
+            walking = true; walker = characters[currentCharacter].characterName;
             characters[currentCharacter].characterObject.GetComponent<moveAnimationController>().moveAnimation();
             gameMaster.setCharacter(characters[currentCharacter], currentCharacter);
             pieceMoved = true;
             mapManager.revealArea(mousePos, 10);
-            mapManager.fogOfWar(mousePos);
+            mapManager.fogOfWar(9, mousePos);
 
         }else if (hits[0].collider.tag == "Floor"){Debug.Log("Distance " + Convert.ToInt32(Math.Round(pathFinder.length * 10, 0)) + " is greater than movement poinst " + characters[currentCharacter].movementPointsLeft);}
     }
 
-    void moveGraphic(Vector2 mousePos)
+    void moveGraphic(Vector2 mousePos) 
     {
         if (initExec)
         {
@@ -179,27 +200,58 @@ public class characterActions : MonoBehaviour
         moveTile.transform.position = mousePos;
     }
 
-    void emptyGraphic(Vector2 mousePos)
+    void holdAction (Vector2 mousePos)
     {
-        
+        Vector2 origin = new Vector2(characters[currentCharacter].characterObject.transform.position.x, characters[currentCharacter].characterObject.transform.position.y);
+        characters[currentCharacter].setOverwatch(mousePos - origin);
+        abilityUsed = true;
+        actionUpdated();
     }
 
-    List<CharacterInfo> lineOfFire (Vector2 origin, Vector2 direction, float range)
+    void holdGraphic (Vector2 mousePos)
     {
-        List<CharacterInfo> hitCharacters = new List<CharacterInfo>();
-        hitCharacters.Clear();
-        Vector2 perp = Vector2.Perpendicular(direction);
-
-        for(float i = -1; i <= 1; i += 0.1f)
+        Vector3 currentCharacterPos = characters[currentCharacter].characterObject.transform.position;
+        currentCharacterPos.y += 0.12f; mousePos.y += 0.083f;
+        if (initExec)
         {
-            var newTarget = origin + direction + (perp * (range * i));
-            var hits = new List<RaycastHit2D>(Physics2D.RaycastAll(origin, newTarget - origin, 20f, LayerMask.GetMask("Characters")));
-            if(hits.Count > 1)
-            {
-                hitCharacters.Add(characters[gameMaster.findChar(hits[1].collider.gameObject.name, characters)]);
-            }
+            holdArea.SetActive(true);
+            initExec = false;
         }
-        return hitCharacters;
+        holdArea.transform.position = currentCharacterPos;
+
+        Vector3 targetPos = new Vector3(mousePos.x, mousePos.y, holdArea.transform.position.z);
+        var lookDir = targetPos - currentCharacterPos;
+        Vector3 fixedLookDir = Quaternion.Euler(0, 0, 90) * lookDir;
+        holdArea.transform.rotation = Quaternion.LookRotation(Vector3.forward, fixedLookDir);
+
+        if(holdArea.transform.rotation.eulerAngles.z < 180)
+        {
+            float rotationAmount = 30 - (60 * (holdArea.transform.rotation.eulerAngles.z / 180));
+            holdArea.transform.RotateAround(holdArea.transform.position, lookDir, rotationAmount);
+        }else{
+            float rotationAmount = -1 * (30 - (60 * ((holdArea.transform.rotation.eulerAngles.z - 180) / 180)));
+            holdArea.transform.RotateAround(holdArea.transform.position, lookDir, rotationAmount);
+        }
+    }
+
+    void emptyGraphic(Vector2 mousePos)
+    {
+        if (initExec)
+        {
+            emptyTile.SetActive(true);
+            initExec = false;
+        }
+        emptyTile.transform.position = mousePos;
+    }
+
+    public void restrictAction()
+    {
+
+    }
+
+    public void releaseAction()
+    {
+
     }
 
     public void actionUpdated()
@@ -212,7 +264,9 @@ public class characterActions : MonoBehaviour
         }else
         {
             if (attackToggle.isOn) { disableGraphics(); currentAction = attackAction; currentGraphic = attackGraphic; }
-            if (moveToggle.isOn) { disableGraphics(); currentAction = moveAction; currentGraphic = moveGraphic; }
+            else if (moveToggle.isOn) { disableGraphics(); currentAction = moveAction; currentGraphic = moveGraphic; }
+            else if (holdToggle.isOn) { disableGraphics(); currentAction = holdAction; currentGraphic = holdGraphic; }
+            else {disableGraphics(); currentAction = emptyGraphic; currentGraphic = emptyGraphic;}
         }
     }
 
@@ -221,10 +275,73 @@ public class characterActions : MonoBehaviour
         moveTile.SetActive(false);
         attackTile.SetActive(false);
         attackArea.SetActive(false);
+        holdArea.SetActive(false);
         pathFinder.enableGraphics(false);
         initExec = true;
     }
 
+    List<CharacterInfo> lineOfFire (Vector2 origin, Vector2 direction, float range)
+    {
+        List<CharacterInfo> hitCharacters = new List<CharacterInfo>();
+        hitCharacters.Clear();
+        Vector2 perp = Vector2.Perpendicular(direction);
+
+        for(float i = -1; i <= 1; i += 0.1f)
+        {
+            var newTarget = origin + direction + (perp * (range * i));
+            var hits = new List<RaycastHit2D>(Physics2D.RaycastAll(origin, newTarget - origin, 20f, LayerMask.GetMask("Characters")));
+            if(hits.Count > 1)  // > 1 because the ray initially hits the character shooting, so we want to belay that
+            {
+                hitCharacters.Add(characters[gameMaster.findChar(hits[1].collider.gameObject.name, characters)]);
+            }
+        }
+        return hitCharacters;
+    }
+    public void shotAnimation(Vector2 shooter, Vector2 target)
+    {
+        Vector2 middle = shooter + ((target - shooter) / 2);
+
+        AnimationCurve xCurve = AnimationCurve.EaseInOut(0, mainCamera.transform.position.x, 0.5f, middle.x);
+        AnimationCurve yCurve = AnimationCurve.EaseInOut(0, mainCamera.transform.position.y, 0.5f, middle.y);
+
+        cameraMove.SetCurve("", typeof(Transform), "localPosition.x", xCurve);
+        cameraMove.SetCurve("", typeof(Transform), "localPosition.y", yCurve);
+
+        anim.AddClip(cameraMove, cameraMove.name);
+        anim.Play(cameraMove.name);
+    }
+    public IEnumerator overwatchAnimation(CharacterInfo shooter, Vector2 target)
+    {
+        Vector2 shooterPos = shooter.characterObject.transform.position;
+        shotAnimation(shooterPos, target);
+
+        Debug.Log("IEnumerator waiting");
+        yield return new WaitForSeconds(1.5f);
+        Debug.Log("IEnumerator back");
+
+        var lookDir = target - shooterPos;
+        var bulletSO = ScriptableObject.CreateInstance<projectileInfo>();
+        bulletSO.shooter = shooter.characterName;
+        bulletSO.damage = 3;
+        var bulletInst = Instantiate(bullet, shooterPos, Quaternion.FromToRotation(Vector2.left, lookDir));
+        bulletSO.projectileIndex = projectileIndex;
+        bulletSO.setObject(bulletInst);
+        projectiles.Add(bulletSO);
+
+        projectileIndex++;
+        
+        rb = bulletInst.GetComponent<Rigidbody2D>();
+        rb.AddForce(-bulletInst.transform.right * 0.001f, ForceMode2D.Impulse);
+    }
+    public void overwatchTrigger(CharacterInfo shooter, Vector2 target)
+    {
+        StartCoroutine(overwatchAnimation(shooter, target));
+    }
+    public void addOverwatch(CharacterInfo character)
+    {
+        charInOverwatch.Add(character);
+        Debug.Log("Added " + character.characterName + " to overwatch list");
+    }
     public void removeProjectile(int i)
     {
         Debug.Log("Removing projectile " + i);
@@ -236,8 +353,8 @@ public class characterActions : MonoBehaviour
         {
             if (currentCharacter == (characters.Count - 1))
                 currentCharacter = 0;
-
-            currentCharacter++;
+            else
+                currentCharacter++;
             while (gameMaster.currentTurn != characters[currentCharacter].side)
             {
                 currentCharacter++;
@@ -262,6 +379,8 @@ public class characterActions : MonoBehaviour
     }
     public void endTurn()
     {
+        foreach (CharacterInfo character in characters)
+            character.movementPointsLeft = character.movementPointsMax;       
         gameMaster.switchTurns();
         turnReset();
     }
