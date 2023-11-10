@@ -12,9 +12,11 @@ public class TESTING : MonoBehaviour
     public string displayList;
     public Text text;
     public InputField input;
+    private List<Vector3Int> spawnPositions;
 
     void Awake()
     {
+        spawnPositions = new();
         characters = new List<CharacterInfo>();
         master = GameObject.Find("GameMaster").GetComponent<gameMaster>();
     }
@@ -35,7 +37,11 @@ public class TESTING : MonoBehaviour
         characters.Add(obj1);
         characters.Add(obj2);
         characters.Add(obj3);
-        master.spawnCharacters(characters);
+
+        for(int p = 0; p < 6; p++)
+            spawnPositions.Add(new Vector3Int(-11 - p, -21, 0));
+
+        master.spawnCharacters(characters, spawnPositions);
     }
 
     public void addKnight ()

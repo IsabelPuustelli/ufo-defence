@@ -5,6 +5,7 @@ using UnityEngine.Tilemaps;
 public class moveAnimationController : MonoBehaviour
 {
     private Tilemap map;
+    private Tilemap anchors;
     private movementPointsToReach pathfinder;
     private tileMapManager mapManager;
     private gameMaster gameMaster;
@@ -26,7 +27,7 @@ public class moveAnimationController : MonoBehaviour
         evt.time = 0.1f;
         evt.functionName = "moveAnimation";
 
-        nextSpawn.time = 1.5f;
+        nextSpawn.time = 0.5f;
         nextSpawn.functionName = "nextChar";
         
         spawnClip.AddEvent(nextSpawn);
@@ -37,18 +38,30 @@ public class moveAnimationController : MonoBehaviour
         gameMaster = GameObject.Find("GameMaster").GetComponent<gameMaster>();
         characterActions = GameObject.Find("GameMaster").GetComponent<characterActions>();
         map = GameObject.Find("Floor").GetComponent<Tilemap>();
+        anchors = GameObject.Find("roomAnchors").GetComponent<Tilemap>();
     }
 
     public void moveAnimation()
     {
-        if (!stopAnimation)
+        if (stopAnimation)
+        {
+            characterActions.restrictAction(false);
+            transform.position =  map.GetCellCenterWorld(map.WorldToCell(transform.position));
+            characterActions.walking = false;
+            i = 0;
+        }
+        else
         {
             clip = new AnimationClip();
             clip.legacy = true;
             if (i == 0){path = pathfinder.movementPath;}
             if (i < path.Count)
             {
-                AnimationCurve xCurve = AnimationCurve.EaseInOut(0, transform.localPosition.x, 0.1f, (path[i].x + 0.02f));
+                var pos = new Vector3(transform.position.x, transform.position.y, 0);
+                if (anchors.GetTile(anchors.WorldToCell(pos)) != null)
+                    StartCoroutine(mapManager.blockSpawner(pos));
+
+                AnimationCurve xCurve = AnimationCurve.EaseInOut(0, transform.localPosition.x, 0.1f, path[i].x);
                 AnimationCurve yCurve = AnimationCurve.EaseInOut(0, transform.localPosition.y, 0.1f, (path[i].y - 0.15f));
                 AnimationCurve zCurve = AnimationCurve.Linear(0, transform.localPosition.z, 0.1f, transform.localPosition.z);
 
@@ -61,20 +74,26 @@ public class moveAnimationController : MonoBehaviour
                 anim.AddClip(clip, clip.name);
                 anim.Play(clip.name);
             }else{
+                var pos = new Vector3(transform.position.x, transform.position.y, 0);
+                if (anchors.GetTile(anchors.WorldToCell(pos)) != null)
+                    StartCoroutine(mapManager.blockSpawner(pos));
                 i = 0;
                 transform.position =  map.GetCellCenterWorld(map.WorldToCell(transform.position));
                 characterActions.walking = false;
+                characterActions.restrictAction(false);
             }
         }
     }
 
-    public void spawnAnimation()
+    public void spawnAnimation(Vector3Int pos)
     {
-        AnimationCurve xCurve = AnimationCurve.Linear(0, transform.localPosition.x + 0f, 0f, transform.localPosition.x + 0f);
-        AnimationCurve yCurve = AnimationCurve.EaseInOut(0, transform.localPosition.y + 1f, 1.5f, transform.localPosition.y - 0.20f);
+        AnimationCurve xCurve = AnimationCurve.Linear(0, map.GetCellCenterWorld(pos).x, 0f, map.GetCellCenterWorld(pos).x);
+        AnimationCurve yCurve = AnimationCurve.EaseInOut(0, map.GetCellCenterWorld(pos).y + 1f, 1f, map.GetCellCenterWorld(pos).y + 0.1f);
+        AnimationCurve zCurve = AnimationCurve.Linear(0, map.GetCellCenterWorld(pos).z, 0f, map.GetCellCenterWorld(pos).z);
 
         spawnClip.SetCurve("", typeof(Transform), "localPosition.x", xCurve);
         spawnClip.SetCurve("", typeof(Transform), "localPosition.y", yCurve);
+        spawnClip.SetCurve("", typeof(Transform), "localPosition.z", zCurve);
 
         anim.AddClip(spawnClip, spawnClip.name);
         anim.Play(spawnClip.name);

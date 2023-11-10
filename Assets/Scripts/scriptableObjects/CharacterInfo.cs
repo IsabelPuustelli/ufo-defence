@@ -65,7 +65,7 @@ public class CharacterInfo : ScriptableObject
         }
         characterActions.addOverwatch(this);
     }
-    public void checkOverwatch()
+    public CharacterInfo checkOverwatch()
     {
         Vector2 origin = new Vector2(characterObject.transform.position.x, characterObject.transform.position.y + 0.12f);
         foreach (Vector2 dir in overwatchDirections)
@@ -77,10 +77,11 @@ public class CharacterInfo : ScriptableObject
                 if (hit.transform.name == characterActions.walker)
                 {
                     gameMaster.getCharacterByName(hit.transform.name).characterObject.GetComponent<moveAnimationController>().stopAnimation = true;
-                    characterActions.overwatchTrigger(this, hit.transform.position);
+                    return gameMaster.getCharacterByName(hit.transform.name);
                 }
             }
         }
+        return null;
     }
     public void updateInfo()
     {

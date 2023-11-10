@@ -10,18 +10,15 @@ public class gameMaster : MonoBehaviour
 {
     UnityEvent updateCharacterList = new UnityEvent();
     public int currentTurn;
-    private List<CharacterInfo> blacks;
-    private List<CharacterInfo> whites;
-    public List<CharacterInfo> allCharacters;
+    private List<CharacterInfo> blacks = new();
+    private List<CharacterInfo> whites = new();
+    public List<CharacterInfo> allCharacters = new();
+    private List<Vector3Int> spawnPositions = new();
     private Transform mainCamera;
     private Transform whitesTrans;
     private Transform blacksTrans;
     public Transform fullHealth;
     public Transform emptyHealth;
-    public Transform wKnight;
-    public Transform wRook;
-    public Transform bKnight;
-    public Transform bRook;
     public Tilemap map;
     private movementPointsToReach pathFinder;
     private characterActions characterActions;
@@ -39,6 +36,7 @@ public class gameMaster : MonoBehaviour
         whites = new List<CharacterInfo>();
         blacks = new List<CharacterInfo>();
         allCharacters = new List<CharacterInfo>();
+        spawnPositions = new();
 
         whitesTrans = transform.Find("whitesTrans");
         blacksTrans = transform.Find("blacksTrans");
@@ -70,8 +68,9 @@ public class gameMaster : MonoBehaviour
         updateCharacterList.Invoke();
     }
 
-    public void spawnCharacters(List<CharacterInfo> characterList)
+    public void spawnCharacters(List<CharacterInfo> characterList, List<Vector3Int> _spawnPositions)
     {
+        spawnPositions = _spawnPositions;
         allCharacters.AddRange(characterList);
         updateCharacterList.Invoke();
         spawnLoop();
@@ -85,7 +84,7 @@ public class gameMaster : MonoBehaviour
         {
             if (allCharacters[i].side == 0) 
             {
-                allCharacters[i].characterObject = Instantiate(allCharacters[i].characterPrefab, map.GetCellCenterWorld(new Vector3Int(-11 - i, -20, 0)), Quaternion.identity, whitesTrans);
+                allCharacters[i].characterObject = Instantiate(allCharacters[i].characterPrefab, Vector3.zero, Quaternion.identity, whitesTrans);
                 allCharacters[i].characterObject.name = allCharacters[i].characterName;
                 allCharacters[i].updateInfo();
 
@@ -107,13 +106,12 @@ public class gameMaster : MonoBehaviour
                 allCharacters[i].fullHealth = fullHealth;
                 allCharacters[i].emptyHealth = emptyHealth;
 
-
-                allCharacters[i].characterObject.GetComponent<moveAnimationController>().spawnAnimation();
+                allCharacters[i].characterObject.GetComponent<moveAnimationController>().spawnAnimation(spawnPositions[i]);
 
                 whites.Add(allCharacters[i]);
                 Debug.Log(allCharacters[i].characterName + " spawned on white side");
             }else{
-                allCharacters[i].characterObject = Instantiate(allCharacters[i].characterPrefab, map.GetCellCenterWorld(new Vector3Int(-11 - i, -20, 0)), Quaternion.identity, whitesTrans);
+                allCharacters[i].characterObject = Instantiate(allCharacters[i].characterPrefab, Vector3.zero, Quaternion.identity, blacksTrans);
                 allCharacters[i].characterObject.name = allCharacters[i].characterName;
                 allCharacters[i].updateInfo();
                 List <Transform> healthParalellograms = new List<Transform>();
@@ -134,7 +132,7 @@ public class gameMaster : MonoBehaviour
                 allCharacters[i].fullHealth = fullHealth;
                 allCharacters[i].emptyHealth = emptyHealth;
 
-                allCharacters[i].characterObject.GetComponent<moveAnimationController>().spawnAnimation();
+                allCharacters[i].characterObject.GetComponent<moveAnimationController>().spawnAnimation(spawnPositions[i]);
 
                 blacks.Add(allCharacters[i]);
                 Debug.Log(allCharacters[i].characterName + " spawned on black side");
@@ -144,7 +142,6 @@ public class gameMaster : MonoBehaviour
         }
         else
         {
-            tileMapManager.revealArea(map.GetCellCenterWorld(new Vector3Int(-11 - i, -20, 0)), 15);
             tileMapManager.fogOfWar(10, allCharacters[currentCharacter].characterObject.transform.position);
         }
     }

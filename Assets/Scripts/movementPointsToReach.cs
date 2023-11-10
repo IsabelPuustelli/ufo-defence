@@ -92,8 +92,8 @@ public class movementPointsToReach : MonoBehaviour
             text.enabled = true;
             currentActionMove = true;
         }else{
-            line.enabled = false;
-            text.enabled = false;
+            GetComponent<LineRenderer>().enabled = false;
+            GetComponent<TMP_Text>().enabled = false;
             currentActionMove = false;
         }
     }

@@ -16,9 +16,11 @@ public class characterActions : MonoBehaviour
     public GameObject attackArea;
     public GameObject holdArea;
     private GameObject mainCamera;
+    private Camera cam;
     public Tilemap map;
     private int currentCharacter;
     private int projectileIndex;
+    private int animationIndex;
     private gameMaster gameMaster;
     private tileMapManager mapManager;
     private Rigidbody2D rb;
@@ -34,6 +36,7 @@ public class characterActions : MonoBehaviour
     public Toggle moveToggle;
     public Toggle attackToggle;
     public Toggle holdToggle;
+    public Button endTurnButton;
 
     public bool overUI;
     public bool pieceMoved;
@@ -48,6 +51,7 @@ public class characterActions : MonoBehaviour
     {
         pathFinder = transform.Find("pathPrinter").GetComponent<movementPointsToReach>();
         mainCamera = GameObject.Find("Main Camera");
+        cam = mainCamera.GetComponent<Camera>();
         gameMaster = GetComponent<gameMaster>();
         mapManager = GameObject.Find("Grid").GetComponent<tileMapManager>();
         anim = mainCamera.GetComponent<Animation>();
@@ -75,6 +79,7 @@ public class characterActions : MonoBehaviour
 
     void Update()
     {
+
         if(!overUI)
         {
             Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
@@ -84,7 +89,16 @@ public class characterActions : MonoBehaviour
 
         if(walking)
             foreach(CharacterInfo character in charInOverwatch)
-                character.checkOverwatch();
+            {
+                if (character.side != gameMaster.currentTurn)
+                {
+                    var hit = character.checkOverwatch();
+                    if (hit != null)
+                    {
+                        overwatchTrigger(character, hit);
+                    }
+                }
+            }
     }
 
     void OnClick()
@@ -145,8 +159,14 @@ public class characterActions : MonoBehaviour
         {
             foreach(CharacterInfo character in charInLineOfFire) {character.disableAttackHover();}
             charInLineOfFire.Clear();
-            charInLineOfFire = lineOfFire(currentCharacterPos, lookDir, 0.2f);
-            foreach(CharacterInfo character in charInLineOfFire) {character.enableAttackHover(characters[currentCharacter].currentWeaponDamage);}
+            charInLineOfFire = lineOfFire(currentCharacterPos, lookDir, 0.2f);  
+            foreach(CharacterInfo character in charInLineOfFire) 
+            {
+                if (inCover(characters[currentCharacter].characterObject.position, character.characterObject.position))
+                    character.enableAttackHover(characters[currentCharacter].currentWeaponDamage / 2);
+                else
+                    character.enableAttackHover(characters[currentCharacter].currentWeaponDamage);
+            }
         }
 
         if(attackArea.transform.rotation.eulerAngles.z < 180)
@@ -179,10 +199,10 @@ public class characterActions : MonoBehaviour
             characters[currentCharacter].movementPointsLeft -= Convert.ToInt32(Math.Round(pathFinder.length * 10, 0));
             characters[currentCharacter].characterObject.GetComponent<moveAnimationController>().i = 0; 
             walking = true; walker = characters[currentCharacter].characterName;
+            restrictAction(true);
             characters[currentCharacter].characterObject.GetComponent<moveAnimationController>().moveAnimation();
             gameMaster.setCharacter(characters[currentCharacter], currentCharacter);
             pieceMoved = true;
-            mapManager.revealArea(mousePos, 10);
             mapManager.fogOfWar(9, mousePos);
 
         }else if (hits[0].collider.tag == "Floor"){Debug.Log("Distance " + Convert.ToInt32(Math.Round(pathFinder.length * 10, 0)) + " is greater than movement poinst " + characters[currentCharacter].movementPointsLeft);}
@@ -192,6 +212,7 @@ public class characterActions : MonoBehaviour
     {
         if (initExec)
         {
+            Debug.Log("pathfinder = true");
             moveTile.SetActive(true);
             pathFinder.updateCharacterList();
             pathFinder.enableGraphics(true);
@@ -244,22 +265,43 @@ public class characterActions : MonoBehaviour
         emptyTile.transform.position = mousePos;
     }
 
-    public void restrictAction()
+    public void restrictAction(bool restrict)
     {
-
-    }
-
-    public void releaseAction()
-    {
-
+        if (restrict)
+            animationIndex++;
+        else
+            animationIndex--;
+        
+        if (animationIndex > 0)
+        {
+            disableGraphics();
+            moveToggle.interactable = false;
+            attackToggle.interactable = false;
+            holdToggle.interactable = false;
+            endTurnButton.interactable = false;
+            currentGraphic = emptyGraphic;
+            currentAction = emptyGraphic;
+        }
+        else
+        {
+            moveToggle.interactable = true;
+            attackToggle.interactable = true;
+            holdToggle.interactable = true;
+            endTurnButton.interactable = true;
+            actionUpdated();
+        }
     }
 
     public void actionUpdated()
     {
         if(abilityUsed)
         {
+            moveToggle.isOn = false;
+            attackToggle.isOn = false;
+            holdToggle.isOn = false;
             moveToggle.interactable = false;
             attackToggle.interactable = false;
+            holdToggle.interactable = false;
             disableGraphics(); currentAction = emptyGraphic; currentGraphic = emptyGraphic;
         }else
         {
@@ -274,6 +316,7 @@ public class characterActions : MonoBehaviour
     {
         moveTile.SetActive(false);
         attackTile.SetActive(false);
+        emptyTile.SetActive(false);
         attackArea.SetActive(false);
         holdArea.SetActive(false);
         pathFinder.enableGraphics(false);
@@ -297,29 +340,63 @@ public class characterActions : MonoBehaviour
         }
         return hitCharacters;
     }
+    bool inCover(Vector3 origin, Vector3 target)    //Return true if target is behind effective cover from origin
+    {
+        origin.y += 0.12f; target.y += 0.12f;
+        var hits = Physics2D.RaycastAll(origin, target - origin, Vector3.Distance(origin, target), LayerMask.GetMask("Cover"));
+        if (hits.Length != 0)
+        {
+            var hit = hits[hits.Length - 1];
+            if (hit.collider.tag == "lowCover")  //Is there cover between the two points
+            {
+                var coverPos = map.WorldToCell(hit.point);
+                var targetCords = map.WorldToCell(target);
+                if (Vector3.Distance(map.GetCellCenterWorld(coverPos), map.GetCellCenterWorld(targetCords)) < 0.34f &&  //Is the target next to the cover
+                    Vector3.Distance(map.GetCellCenterWorld(coverPos), map.GetCellCenterWorld(map.WorldToCell(origin))) > 0.34f)    //Is the shooter not on the other side of the same cover
+                    return true;
+                else
+                    return false;
+            }
+            else
+                return false; 
+        }
+        else
+            return false;
+    }
     public void shotAnimation(Vector2 shooter, Vector2 target)
     {
         Vector2 middle = shooter + ((target - shooter) / 2);
 
         AnimationCurve xCurve = AnimationCurve.EaseInOut(0, mainCamera.transform.position.x, 0.5f, middle.x);
         AnimationCurve yCurve = AnimationCurve.EaseInOut(0, mainCamera.transform.position.y, 0.5f, middle.y);
+        AnimationCurve zCurve = AnimationCurve.EaseInOut(0, mainCamera.transform.position.z, 0.5f, mainCamera.transform.position.z);
 
         cameraMove.SetCurve("", typeof(Transform), "localPosition.x", xCurve);
         cameraMove.SetCurve("", typeof(Transform), "localPosition.y", yCurve);
+        cameraMove.SetCurve("", typeof(Transform), "localPosition.z", zCurve);
 
         anim.AddClip(cameraMove, cameraMove.name);
         anim.Play(cameraMove.name);
+        StartCoroutine(cameraZoomOut(Vector2.Distance(shooter, target)));
     }
-    public IEnumerator overwatchAnimation(CharacterInfo shooter, Vector2 target)
+    IEnumerator cameraZoomOut(float distance)
+    {
+        for(float height = cam.orthographicSize; height < distance / 2; height += 0.01f)
+        {
+            cam.orthographicSize = height;
+            yield return null;
+        }
+        StopCoroutine(cameraZoomOut(distance));
+    }
+    public IEnumerator overwatchAnimation(CharacterInfo shooter, CharacterInfo target)
     {
         Vector2 shooterPos = shooter.characterObject.transform.position;
-        shotAnimation(shooterPos, target);
+        Vector2 targetPos = target.characterObject.transform.position;
+        shotAnimation(shooterPos, targetPos);
 
-        Debug.Log("IEnumerator waiting");
         yield return new WaitForSeconds(1.5f);
-        Debug.Log("IEnumerator back");
 
-        var lookDir = target - shooterPos;
+        var lookDir = targetPos - shooterPos;
         var bulletSO = ScriptableObject.CreateInstance<projectileInfo>();
         bulletSO.shooter = shooter.characterName;
         bulletSO.damage = 3;
@@ -332,15 +409,18 @@ public class characterActions : MonoBehaviour
         
         rb = bulletInst.GetComponent<Rigidbody2D>();
         rb.AddForce(-bulletInst.transform.right * 0.001f, ForceMode2D.Impulse);
+        target.characterObject.GetComponent<moveAnimationController>().stopAnimation = false;
+        StopCoroutine(overwatchAnimation(shooter, target));
     }
-    public void overwatchTrigger(CharacterInfo shooter, Vector2 target)
+    public void overwatchTrigger(CharacterInfo shooter, CharacterInfo target)
     {
+        walking = false;
         StartCoroutine(overwatchAnimation(shooter, target));
+        charInOverwatch.Remove(shooter);
     }
     public void addOverwatch(CharacterInfo character)
     {
         charInOverwatch.Add(character);
-        Debug.Log("Added " + character.characterName + " to overwatch list");
     }
     public void removeProjectile(int i)
     {

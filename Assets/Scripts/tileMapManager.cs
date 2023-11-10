@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
@@ -8,46 +9,61 @@ public class tileMapManager : MonoBehaviour
     private Tilemap floor;
     private Tilemap cover;
     private Tilemap fog;
+    private Tilemap anchors;
     public Dictionary<Vector2Int, TileBase> tileSetFloor;
     public Dictionary<Vector2Int, TileBase> tileSetCover;
-    List <Vector2Int> laidTiles = new List<Vector2Int>();
-    List <Vector2Int> tilesInSight = new List<Vector2Int>();
-    List<TileBase> tilesList = new List<TileBase>();
-    List<Vector3Int> tilesLoc = new List<Vector3Int>();
+    public Dictionary<TileBase, List<Vector2Int>> anchorTiles;
+    List <Vector2Int> laidTiles = new();
+    List <Vector2Int> tilesInSight = new();
+    List<TileBase> tilesList = new();
+    List<Vector3Int> tilesLoc = new();
     private AnimationCurve curve;
     private AnimationClip clip;
     private int i;
     private tileLibrary tileLibrary;
     private gameMaster gameMaster;
-
+    private characterActions characterActions;
+    bool animStarted = false;
+    
     void Start()
     {
-        i = 0;
-        tileLibrary = GetComponent<tileLibrary>();
-        gameMaster = GameObject.Find("GameMaster").GetComponent<gameMaster>();
-        
-        clip = new AnimationClip();
-        clip.legacy = true;
-        AnimationEvent spwn = new AnimationEvent(); spwn.time = 0.005f; spwn.functionName = "spawnNextBlock";
-        AnimationEvent evt = new AnimationEvent(); evt.time = 0.4f; evt.functionName = "selfDestruct";
-        clip.AddEvent(evt); clip.AddEvent(spwn);
-
-        tileSetFloor = new Dictionary<Vector2Int, TileBase>();
-        tileSetCover = new Dictionary<Vector2Int, TileBase>();
-
         floor = GameObject.Find("Floor").GetComponent<Tilemap>();
         cover = GameObject.Find("Cover").GetComponent<Tilemap>();
         fog = GameObject.Find("fogOfWar").GetComponent<Tilemap>();
+        anchors = GameObject.Find("roomAnchors").GetComponent<Tilemap>();
+        floor.CompressBounds(); cover.CompressBounds(); fog.CompressBounds(); anchors.CompressBounds();
+
+        i = 0;
+        tileLibrary = GetComponent<tileLibrary>();
+        gameMaster = GameObject.Find("GameMaster").GetComponent<gameMaster>();
+        characterActions = GameObject.Find("GameMaster").GetComponent<characterActions>();
+        
+        clip = new AnimationClip();
+        clip.legacy = true;
+        //AnimationEvent spwn = new AnimationEvent(); spwn.time = 0.005f; spwn.functionName = "spawnNextBlock";
+        AnimationEvent evt = new AnimationEvent(); evt.time = 0.4f; evt.functionName = "selfDestruct";
+        clip.AddEvent(evt); //clip.AddEvent(spwn);
+
+        tileSetFloor = new Dictionary<Vector2Int, TileBase>();
+        tileSetCover = new Dictionary<Vector2Int, TileBase>();
+        anchorTiles = new Dictionary<TileBase, List<Vector2Int>>();
+
         BoundsInt bounds = floor.cellBounds;
         TileBase[] allTiles = floor.GetTilesBlock(bounds);
 
-        GameObject obj = new GameObject();
+        GameObject obj = new();
         TextMeshPro text = obj.AddComponent(typeof(TextMeshPro)) as TextMeshPro;
         text.fontSize = 0.2f;
         text.alignment = TextAlignmentOptions.Center;
 
-        for (int x = -27; x < 0; x++) {
-            for (int y = -45; y < 0; y++) 
+        foreach(Object tile in tileLibrary.anchorTiles)
+        {
+            blockData block = (blockData)tile;
+            anchorTiles.Add(block, new List<Vector2Int>());
+        }
+
+        for (int x = floor.cellBounds.xMin; x < floor.cellBounds.xMax; x++) {
+            for (int y = floor.cellBounds.yMin; y < floor.cellBounds.yMax; y++) 
             {
                 if (floor.GetTile(new Vector3Int(x, y, 0)) != null)
                 {
@@ -62,97 +78,63 @@ public class tileMapManager : MonoBehaviour
                     
                 if (cover.GetTile(new Vector3Int(x, y, 0)) != null)
                     tileSetCover.Add(new Vector2Int(x, y), cover.GetTile(new Vector3Int(x, y, cover.origin.z)));
+                if (anchors.GetTile(new Vector3Int(x, y, 0)) != null)
+                    anchorTiles[anchors.GetTile(new Vector3Int(x, y, 0))].Add(new Vector2Int(x, y));
             }
         }
     }
-    
-    public void revealArea(Vector2 center, int range)
+
+    public IEnumerator blockSpawner (Vector2 collision)
     {
-        Vector3Int centerCell = floor.WorldToCell(center);
-        int y = 0;
-        tilesList.Clear(); tilesLoc.Clear();
-
-        for (int x = range; x >= -range; x--)
+        if (!animStarted)
         {
-            if (tileSetFloor.ContainsKey(new Vector2Int(centerCell.x + x, centerCell.y)))
-            {
-                tilesList.Add(floor.GetTile(new Vector3Int(centerCell.x + x, centerCell.y, 0)));
-                tilesLoc.Add(new Vector3Int(centerCell.x + x, centerCell.y, 0));
-                tileSetFloor.Remove(new Vector2Int(centerCell.x + x, centerCell.y));
-                laidTiles.Add(new Vector2Int(centerCell.x + x, centerCell.y));
-            }else if(tileSetCover.ContainsKey(new Vector2Int(centerCell.x + x, centerCell.y)))
-            {
-                tilesList.Add(cover.GetTile(new Vector3Int(centerCell.x + x, centerCell.y, 0)));
-                tilesLoc.Add(new Vector3Int(centerCell.x + x, centerCell.y, 0));
-                tileSetCover.Remove(new Vector2Int(centerCell.x + x, centerCell.y));
-            }
+            characterActions.restrictAction(true);
+            animStarted = true;
 
-            if (x >= 0){y = range - x;}
-            else{y = range + x;}
-            while(y > 0)
+            var tilesToLay = anchorTiles[anchors.GetTile(anchors.WorldToCell(collision))];
+            laidTiles.AddRange(tilesToLay);
+            foreach(Vector2Int pos in tilesToLay)
             {
-                if (tileSetFloor.ContainsKey(new Vector2Int(centerCell.x + x, centerCell.y + y)))
-                {
-                    tilesList.Add(floor.GetTile(new Vector3Int(centerCell.x + x, centerCell.y + y, 0)));
-                    tilesLoc.Add(new Vector3Int(centerCell.x + x, centerCell.y + y, 0));
-                    tileSetFloor.Remove(new Vector2Int(centerCell.x + x, centerCell.y + y));
-                    laidTiles.Add(new Vector2Int(centerCell.x + x, centerCell.y + y));
-                }else if(tileSetCover.ContainsKey(new Vector2Int(centerCell.x + x, centerCell.y + y)))
-                {
-                    tilesList.Add(cover.GetTile(new Vector3Int(centerCell.x + x, centerCell.y + y, 0)));
-                    tilesLoc.Add(new Vector3Int(centerCell.x + x, centerCell.y + y, 0));
-                    tileSetCover.Remove(new Vector2Int(centerCell.x + x, centerCell.y + y));
-                }
-                if (tileSetFloor.ContainsKey(new Vector2Int(centerCell.x + x, centerCell.y - y)))
-                {
-                    tilesList.Add(floor.GetTile(new Vector3Int(centerCell.x + x, centerCell.y - y, 0)));
-                    tilesLoc.Add(new Vector3Int(centerCell.x + x, centerCell.y - y, 0));
-                    tileSetFloor.Remove(new Vector2Int(centerCell.x + x, centerCell.y - y));
-                    laidTiles.Add(new Vector2Int(centerCell.x + x, centerCell.y - y));
-                }else if(tileSetCover.ContainsKey(new Vector2Int(centerCell.x + x, centerCell.y - y)))
-                {
-                    tilesList.Add(cover.GetTile(new Vector3Int(centerCell.x + x, centerCell.y - y, 0)));
-                    tilesLoc.Add(new Vector3Int(centerCell.x + x, centerCell.y - y, 0));
-                    tileSetCover.Remove(new Vector2Int(centerCell.x + x, centerCell.y - y));
-                }
-                y--;
-            }
-        }
-        i = 0;
-        if (tilesLoc.Count > 0)
-            blockSpawner();
-    }
 
-    public void blockSpawner()
-    {
-        if (i != -1)
-        {
-            Vector3 worldLoc = floor.GetCellCenterWorld(tilesLoc[i]);
-            Keyframe one = new Keyframe(0, worldLoc.y + 0.3f);
-            Keyframe two = new Keyframe(0.4f, worldLoc.y);
-            curve = new AnimationCurve(one, two);
-            clip.SetCurve("", typeof(Transform), "localPosition.y", curve);
-            clip.SetCurve("", typeof(Transform), "localPosition.x", new AnimationCurve(new Keyframe(0, worldLoc.x)));
-            var block = Instantiate(tileLibrary.findPrefab(tilesList[i]), new Vector3(worldLoc.x, worldLoc.y + 0.3f, worldLoc.z), Quaternion.identity, GameObject.Find("Cover").transform);
-            i++;
-            if (i == tilesLoc.Count - 1)
-                i = -1;
-            
-            block.GetComponent<Animation>().AddClip(clip, "clip");
-            block.GetComponent<Animation>().Play("clip");
+                Vector3 worldLoc = floor.GetCellCenterWorld(new Vector3Int(pos.x, pos.y, 0));
+
+                Keyframe one = new Keyframe(0, worldLoc.y + 0.3f);
+                Keyframe two = new Keyframe(0.4f, worldLoc.y);
+                curve = new AnimationCurve(one, two);
+                clip.SetCurve("", typeof(Transform), "localPosition.y", curve);
+                clip.SetCurve("", typeof(Transform), "localPosition.x", new AnimationCurve(new Keyframe(0, worldLoc.x)));
+
+                if (tileSetFloor.ContainsKey(pos))
+                {
+                    var block = Instantiate(tileLibrary.findPrefab(tileSetFloor[pos]), new Vector3(worldLoc.x, worldLoc.y + 0.3f, worldLoc.z), Quaternion.identity, GameObject.Find("Floor").transform);
+                    block.GetComponent<Animation>().AddClip(clip, "clip");
+                    block.GetComponent<Animation>().Play("clip");
+                }
+                if (tileSetCover.ContainsKey(pos))
+                {
+                    var block = Instantiate(tileLibrary.findPrefab(tileSetCover[pos]), new Vector3(worldLoc.x, worldLoc.y + 0.3f, worldLoc.z), Quaternion.identity, GameObject.Find("Cover").transform);
+                    block.GetComponent<Animation>().AddClip(clip, "clip");
+                    block.GetComponent<Animation>().Play("clip");
+                }
+                anchors.SetTile(new Vector3Int(pos.x, pos.y, 0), null);
+                yield return null;
+            }
+            animStarted = false;
+            characterActions.restrictAction(false);
+            StopCoroutine(blockSpawner(collision));
         }
     }
 
     public void fogOfWar(int range, Vector2 mousePos)
     {
-        Vector3 destination = new Vector3();
+        Vector3 tileToEvaluate = new Vector3();
         List <Vector2> postions = new List<Vector2>();
         foreach (CharacterInfo character in gameMaster.getCharacterList())
         {
             if (character != gameMaster.getCurrentCharacter())
-                postions.Add(character.characterObject.transform.position);
+                postions.Add(new Vector2(character.characterObject.transform.position.x, character.characterObject.transform.position.y + 0.12f));
         }
-        postions.Add(mousePos);
+        postions.Add(new Vector2(mousePos.x, mousePos.y + 0.12f));
         tilesInSight.Clear();
         foreach(Vector2 position in postions)
         {
@@ -161,10 +143,10 @@ public class tileMapManager : MonoBehaviour
             centerCell.y++; centerCell.x++;
             for (int x = range; x >= -range; x--)
             {
-                destination = floor.GetCellCenterWorld(new Vector3Int(centerCell.x + x, centerCell.y)); destination.y += 0.083f;
+                tileToEvaluate = floor.GetCellCenterWorld(new Vector3Int(centerCell.x + x, centerCell.y)); tileToEvaluate.y += 0.083f;
                 if (!tilesInSight.Contains(new Vector2Int(centerCell.x + x, centerCell.y)) && 
-                    !Physics2D.Raycast(position, destination - new Vector3(position.x, position.y),
-                    Vector3.Distance(position, destination),  LayerMask.GetMask("Cover")))
+                    !Physics2D.Raycast(position, tileToEvaluate - new Vector3(position.x, position.y),
+                    Vector3.Distance(position, tileToEvaluate),  LayerMask.GetMask("Cover")))
                 {
                     tilesInSight.Add(new Vector2Int(centerCell.x + x, centerCell.y));
                 }
@@ -172,17 +154,17 @@ public class tileMapManager : MonoBehaviour
                 else{y = range + x;}
                 while(y > 0)
                 {
-                    destination = floor.GetCellCenterWorld(new Vector3Int(centerCell.x + x, centerCell.y - y)); destination.y += 0.083f;
+                    tileToEvaluate = floor.GetCellCenterWorld(new Vector3Int(centerCell.x + x, centerCell.y - y)); tileToEvaluate.y += 0.083f;
                     if (!tilesInSight.Contains(new Vector2Int(centerCell.x + x, centerCell.y - y)) && 
-                        !Physics2D.Raycast(position, destination - new Vector3(position.x, position.y),
-                        Vector3.Distance(position, destination),  LayerMask.GetMask("Cover")))
+                        !Physics2D.Raycast(position, tileToEvaluate - new Vector3(position.x, position.y),
+                        Vector3.Distance(position, tileToEvaluate),  LayerMask.GetMask("Cover")))
                     {
                         tilesInSight.Add(new Vector2Int(centerCell.x + x, centerCell.y - y));
                     }
-                    destination = floor.GetCellCenterWorld(new Vector3Int(centerCell.x + x, centerCell.y + y)); destination.y += 0.083f;
+                    tileToEvaluate = floor.GetCellCenterWorld(new Vector3Int(centerCell.x + x, centerCell.y + y)); tileToEvaluate.y += 0.083f;
                     if (!tilesInSight.Contains(new Vector2Int(centerCell.x + x, centerCell.y + y)) && 
-                        !Physics2D.Raycast(position, destination - new Vector3(position.x, position.y),
-                        Vector3.Distance(position, destination),  LayerMask.GetMask("Cover")))
+                        !Physics2D.Raycast(position, tileToEvaluate - new Vector3(position.x, position.y),
+                        Vector3.Distance(position, tileToEvaluate),  LayerMask.GetMask("Cover")))
                     {
                         tilesInSight.Add(new Vector2Int(centerCell.x + x, centerCell.y + y));
                     }

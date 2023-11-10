@@ -9,6 +9,7 @@ public class tileLibrary : MonoBehaviour
     private Tilemap[] map;
     private Object[] prefabs;
     private Object[] tileBases;
+    public Object[] anchorTiles;
     private Dictionary<string, Object> prefabDictionary;
     private Dictionary<string, blockData> blockDictionary;
 
@@ -16,6 +17,7 @@ public class tileLibrary : MonoBehaviour
     {
         prefabs = Resources.LoadAll("tilePrefabs", typeof(GameObject));
         tileBases = Resources.LoadAll("tileBases", typeof(blockData));
+        anchorTiles = Resources.LoadAll("anchorTiles", typeof(blockData));
 
         map = GetComponentsInChildren<Tilemap>();
     }
@@ -34,9 +36,15 @@ public class tileLibrary : MonoBehaviour
             blockDictionary.Add(block.name, block);
             block.isHidden = true;
         }
+        foreach(Object tile in anchorTiles)
+        {
+            blockData block = (blockData)tile;
+            block.isHidden = true;
+        }
         map[0].RefreshAllTiles();
         map[1].RefreshAllTiles();
         map[2].RefreshAllTiles();
+        map[3].RefreshAllTiles();
         foreach(Object tile in tileBases)
         {
             blockData block = (blockData)tile;

@@ -13,8 +13,4 @@ public class tileAnimation : MonoBehaviour
         map1.RefreshTile(map.WorldToCell(transform.position));
         Destroy(gameObject);
     }
-    public void spawnNextBlock()
-    {
-        GameObject.Find("Grid").GetComponent<tileMapManager>().blockSpawner();
-    }
 }
